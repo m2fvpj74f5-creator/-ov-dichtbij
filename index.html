@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OV Dichtbij</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1>OV Dichtbij</h1>
+    <p>Live OV bij je huidige locatie</p>
+  </div>
+  <button id="locate">📍 Mijn locatie</button>
+</header>
+
+<main>
+  <section id="status" class="status">Druk op “Mijn locatie” om te beginnen.</section>
+  <section id="stops" class="stops"></section>
+</main>
+
+<footer>Bron dienstregeling: OVapi/GTFS. Live BTM wordt gebruikt waar een haltecode beschikbaar is.</footer>
+<script src="app.js"></script>
+</body>
+</html>
