@@ -179,7 +179,7 @@ function renderStop(stop, deps, live){
   const el=document.createElement("article"); el.className="stop";
   const rows=deps.length?deps.map(renderDeparture).join("")
     :`<div class="muted" style="padding-top:12px">Geen vertrektijden in de komende 60 minuten.</div>`;
-  el.innerHTML=`<div class="stophead"><div><div class="stopname">${esc(stop.name)}</div><div class="mode">${live?"realtime waar beschikbaar":"dienstregeling"}</div></div><div class="distance">${fmtDist(stop.dist)}</div></div>${rows}`;
+  el.innerHTML=`<div class="stophead"><div><div class="stopname">${esc(stop.name)}</div>${live?"":`<div class="mode">gepland</div>`}</div><div class="distance">${fmtDist(stop.dist)}</div></div>${rows}`;
   return el;
 }
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
@@ -190,7 +190,7 @@ function renderUpdated(rt){
     const stale=rt.stale?" (laatst beschikbare gegevens)":"";
     el.innerHTML=`<span class="dot ${rt.stale?"":"live"}" aria-hidden="true"></span>Realtime bijgewerkt om ${fmtClock(rt.feedTimestamp*1000)}${stale} · vernieuwt elke 30 s`;
   }else{
-    el.innerHTML=`<span class="dot" aria-hidden="true"></span>Realtime tijdelijk niet beschikbaar — dienstregeling getoond · opnieuw proberen over 30 s`;
+    el.innerHTML=`<span class="dot" aria-hidden="true"></span>Realtime tijdelijk niet beschikbaar — geplande tijden getoond · opnieuw proberen over 30 s`;
   }
   el.hidden=false;
 }
