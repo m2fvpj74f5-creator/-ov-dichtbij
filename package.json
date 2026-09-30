@@ -1,0 +1,11 @@
+{
+  "name": "ov-dichtbij",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node dev-server.mjs"
+  },
+  "dependencies": {
+    "gtfs-realtime-bindings": "^2.2.0"
+  }
+}

@@ -15,6 +15,18 @@ main{max-width:760px;margin:auto;padding:14px}
 .time{font-size:20px;font-weight:800}.line{font-weight:800}.dest{color:#344054}
 .next{background:#eef8f1;border-radius:10px;padding:8px;margin-top:8px;border-top:0}
 .delay{color:#b42318;font-size:13px;font-weight:700}
+.early{color:#027a48;font-size:13px;font-weight:700}
+.planned{font-size:13px;font-weight:600;color:#667085;text-decoration:line-through}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:3px;font-size:14px}
+.badge{font-size:10px;font-weight:800;letter-spacing:.04em;padding:2px 6px;border-radius:6px}
+.badge.rt{background:#dcfae6;color:#067647}
+.badge.sched{background:#eaecf0;color:#475467}
+.badge.cancel{background:#fee4e2;color:#b42318}
+.cancelled .time,.cancelled .line,.cancelled .dest{color:#98a2b3}
+.cancelled .time{text-decoration:line-through}
+.updated{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:0 4px;font-size:13px;color:#667085}
+.dot{width:8px;height:8px;border-radius:50%;background:#98a2b3;flex:none}
+.dot.live{background:#12b76a}
 .muted{color:#667085}.error{color:#b42318}
 footer{max-width:760px;margin:20px auto;padding:0 18px 30px;color:#667085;font-size:12px}
 @media(max-width:500px){header{align-items:flex-start}header button{white-space:nowrap}.dest{font-size:14px}}
