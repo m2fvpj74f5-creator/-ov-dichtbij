@@ -179,7 +179,7 @@ function renderStop(stop, deps, live){
   const el=document.createElement("article"); el.className="stop";
   const rows=deps.length?deps.map(renderDeparture).join("")
     :`<div class="muted" style="padding-top:12px">Geen vertrektijden in de komende 60 minuten.</div>`;
-  el.innerHTML=`<div class="stophead"><div><div class="stopname">${esc(stop.name)}</div>${live?"":`<div class="mode">gepland</div>`}</div><div class="distance">${fmtDist(stop.dist)}</div></div>${rows}`;
+  el.innerHTML=`<div class="stophead"><div><div class="stopname">${esc(stop.name)}</div></div><div class="distance">${fmtDist(stop.dist)}</div></div>${rows}`;
   return el;
 }
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
