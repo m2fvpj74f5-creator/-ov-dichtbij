@@ -79,27 +79,76 @@ async function fetchRealtime(ids){
   }
 }
 
+const MATCH_TOLERANCE_MS = 2 * 60000;
+const MATCH_TOLERANCE_NO_DELAY_MS = 20 * 60000;
+
+function dedupeRealtime(realtime){
+  const seen=new Map();
+  for(const rt of realtime){
+    const key=rt.tripId?`${rt.tripId}|${rt.planned}`:`${rt.routeId}|${rt.planned}|${rt.expected}`;
+    if(!seen.has(key)) seen.set(key,rt);
+  }
+  return [...seen.values()];
+}
+
+/* Without a delay the planned time is unknown, so we search wider but never beyond half the headway,
+   otherwise a late bus could be attached to the next scheduled trip of the same route. */
+function toleranceFor(rt, planned, candidateIdx){
+  if(rt.hasDelay!==false) return MATCH_TOLERANCE_MS;
+  const same=planned.filter(p=>p.routeId===planned[candidateIdx].routeId).map(p=>p.planned).sort((a,b)=>a-b);
+  const pos=same.indexOf(planned[candidateIdx].planned);
+  const gaps=[same[pos+1]-same[pos],same[pos]-same[pos-1]].filter(g=>g>0);
+  const halfHeadway=gaps.length?Math.min(...gaps)/2:Infinity;
+  return Math.min(MATCH_TOLERANCE_NO_DELAY_MS,halfHeadway);
+}
+
+/* Greedy global assignment: the closest (realtime, planned) pairs are linked first,
+   so each realtime update gets the nearest planned trip that is not yet linked. */
+function matchRealtime(planned, realtime){
+  const pairs=[];
+  realtime.forEach((rt,r)=>{
+    const rtPlannedMs=rt.planned*1000;
+    planned.forEach((p,i)=>{
+      if(p.routeId!==rt.routeId) return;
+      const lateBy=rtPlannedMs-p.planned;
+      const diff=Math.abs(lateBy);
+      // Without a delay, a large negative offset would mean a bus running far ahead of schedule, which is implausible.
+      if(rt.hasDelay===false && lateBy<-MATCH_TOLERANCE_MS) return;
+      if(diff<=toleranceFor(rt,planned,i)) pairs.push({r,i,diff});
+    });
+  });
+  pairs.sort((a,b)=>a.diff-b.diff);
+  const byRealtime=new Map(), usedPlanned=new Set();
+  for(const {r,i} of pairs){
+    if(byRealtime.has(r)||usedPlanned.has(i)) continue;
+    byRealtime.set(r,i); usedPlanned.add(i);
+  }
+  return {byRealtime,usedPlanned};
+}
+
 function mergeDepartures(schedule, realtime){
   const planned=scheduleToday(schedule);
-  const used=new Set();
+  const updates=dedupeRealtime(realtime);
+  const {byRealtime,usedPlanned}=matchRealtime(planned,updates);
   const lineByRoute=new Map(planned.map(p=>[p.routeId,p]));
   const out=[];
-  for(const rt of realtime){
-    const plannedMs=rt.planned*1000;
-    const idx=planned.findIndex((p,i)=>!used.has(i) && p.routeId===rt.routeId && Math.abs(p.planned-plannedMs)<90000);
-    if(idx>=0) used.add(idx);
-    const ref=idx>=0?planned[idx]:lineByRoute.get(rt.routeId);
+  updates.forEach((rt,r)=>{
+    const idx=byRealtime.get(r);
+    const match=idx!=null?planned[idx]:null;
+    const ref=match||lineByRoute.get(rt.routeId);
+    const expected=rt.expected*1000;
+    const plannedMs=match?match.planned:rt.planned*1000;
     out.push({
       line:ref?.line||"",
-      dest:idx>=0?ref.dest:(ref?.dest||""),
+      dest:ref?.dest||"",
       planned:plannedMs,
-      expected:rt.expected*1000,
-      delayMin:Math.round(rt.delay/60),
+      expected,
+      delayMin:Math.round((expected-plannedMs)/60000),
       cancelled:rt.cancelled,
       realtime:true,
     });
-  }
-  planned.forEach((p,i)=>{ if(!used.has(i)) out.push({...p,expected:p.planned,delayMin:0,cancelled:false,realtime:false}); });
+  });
+  planned.forEach((p,i)=>{ if(!usedPlanned.has(i)) out.push({...p,expected:p.planned,delayMin:0,cancelled:false,realtime:false}); });
   const now=Date.now();
   return out
     .filter(d=>d.expected>=now && d.expected<=now+WINDOW_MS)
@@ -116,7 +165,7 @@ function renderDeparture(d,i){
   const differs=d.realtime && !d.cancelled && fmtTime(d.planned)!==fmtTime(d.expected);
   const badge=d.cancelled
     ?'<span class="badge cancel">GEANNULEERD</span>'
-    :d.realtime?'<span class="badge rt">REALTIME</span>':'<span class="badge sched">DIENSTREGELING</span>';
+    :d.realtime?'<span class="badge rt">REALTIME</span>':'<span class="badge sched" title="Realtime zodra de bus onderweg is">GEPLAND</span>';
   const delay=d.realtime && !d.cancelled && d.delayMin!==0
     ?` · <span class="${d.delayMin>0?"delay":"early"}">${d.delayMin>0?"+":""}${d.delayMin} min</span>`:"";
   return `<div class="dep ${i===0&&!d.cancelled?"next":""} ${d.cancelled?"cancelled":""}">
